@@ -7,7 +7,7 @@ def RANDOM_COLOUR():
 
     """tkinter can understand RGB values like #RRGGBB where the values are hex digits"""
 
-    vals = [hex(x) for x in [random.randint(0, 255) for _ in range(3)]]
+    vals = [hex(random.randint(0, 255)) for _ in range(3)]
     out = "".join([x[2:].zfill(2) for x in vals])
     return f"#{out}"
 
@@ -227,5 +227,13 @@ sub = ButtonFrame(root)
 sub.pack(side=LEFT, expand=YES, fill=BOTH)
 cons = LoggingConsole(f1)
 cons.pack(fill=BOTH, expand=YES)
+
+xdata = [random.randint(0, 100) for _ in range(10)]
+ydata = [random.randint(0, 100) for _ in range(10)]
+
+import graph_widget
+g1 = graph_widget.MyPieWidget(root, data_series=(["first", "second", "third"], [10, 20, 30]))
+g1.pack(side=LEFT)
+
 
 root.mainloop()
