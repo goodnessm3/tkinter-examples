@@ -76,11 +76,14 @@ class EventGraph(Frame):
 
         self.fig = Figure(figsize=(5, 4), dpi=100)
         self.ax = self.fig.add_subplot(111)
-        self.ax.plot(xdata, ydata, picker=5)  # the tolerance for picking with mouse cursor
+        a = self.ax.plot(xdata, ydata, picker=5)  # the tolerance for picking with mouse cursor
+        print(dir(a))
         self.selected = None
+        self.picked = True
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
         self.canvas.mpl_connect("pick_event", self.onpick)  # bind an event for clicking on graph
+        self.canvas.mpl_connect("button_press_event", self.onmouse)
         widget = self.canvas.get_tk_widget()
         widget.pack(side=TOP, fill=BOTH, expand=YES)
 
@@ -90,16 +93,31 @@ class EventGraph(Frame):
         self.fig.add_subplot(111).plot(self.xdata, self.ydata)
         self.canvas.draw()
 
+    def onmouse(self, e):
+
+        if not self.picked and len(self.ax.lines) > 1:
+            self.ax.lines.pop()  # remove the last Line2D object that we plotted
+            self.selected = None
+        self.canvas.draw()
+        self.picked = False
+
+
     def onpick(self, e):
 
+        """called FIRST"""
+
+        print(e.mouseevent)
         if self.selected:
             self.ax.lines.pop()  # remove the last Line2D object that we plotted
-        self.selected = self.ax.plot([self.xdata[e.ind[0]]], [self.ydata[e.ind[0]]], "ro")
-        # the event has an "index" of the data point, but it's returned as a single value list
+            self.selected = None
+        if e.mouseevent.button == 1:
+            self.selected = self.ax.plot([self.xdata[e.ind[0]]], [self.ydata[e.ind[0]]], "ro")
+            # the event has an "index" of the data point, but it's returned as a single value list
         self.canvas.draw()  # need to refresh the canvas
         # print(self.selected)
+        # print(e.artist)
         # print(dir(self.selected))
-
+        self.picked = True
 
 def figure_widget(master, x, y):
 
