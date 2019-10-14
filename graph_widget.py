@@ -50,7 +50,8 @@ class MyOtherGraphWidget(Frame):
             self.ydata = ydata
 
         self.fig = Figure(figsize=(5, 4), dpi=100)
-        self.fig.add_subplot(111).plot(xdata, ydata)
+        self.ax = self.fig.add_subplot(111)
+        self.ax.plot(xdata, ydata)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
         widget = self.canvas.get_tk_widget()
         widget.pack(side=TOP, fill=BOTH, expand=YES)
@@ -60,6 +61,44 @@ class MyOtherGraphWidget(Frame):
         self.fig.clear()
         self.fig.add_subplot(111).plot(self.xdata, self.ydata)
         self.canvas.draw()
+
+
+class EventGraph(Frame):
+
+    def __init__(self, *args, xdata=None, ydata=None, **kwargs):
+
+        super().__init__(*args, **kwargs)
+        if not (xdata and ydata):
+            raise ValueError("must provide x and y data arrays")
+        else:
+            self.xdata = xdata
+            self.ydata = ydata
+
+        self.fig = Figure(figsize=(5, 4), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+        self.ax.plot(xdata, ydata, picker=5)  # the tolerance for picking with mouse cursor
+        self.selected = None
+
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.mpl_connect("pick_event", self.onpick)  # bind an event for clicking on graph
+        widget = self.canvas.get_tk_widget()
+        widget.pack(side=TOP, fill=BOTH, expand=YES)
+
+    def refresh(self):
+
+        self.fig.clear()
+        self.fig.add_subplot(111).plot(self.xdata, self.ydata)
+        self.canvas.draw()
+
+    def onpick(self, e):
+
+        if self.selected:
+            self.ax.lines.pop()  # remove the last Line2D object that we plotted
+        self.selected = self.ax.plot([self.xdata[e.ind[0]]], [self.ydata[e.ind[0]]], "ro")
+        # the event has an "index" of the data point, but it's returned as a single value list
+        self.canvas.draw()  # need to refresh the canvas
+        # print(self.selected)
+        # print(dir(self.selected))
 
 
 def figure_widget(master, x, y):
@@ -100,16 +139,20 @@ class MyPieWidget(Frame):
 
     def __init__(self, *args, data_series=None, **kwargs):
 
-        """data_series is a pair of lists [name1, name2...], [value1, value2...]"""
+        """data_series is a pair of lists [name1, name2...], [value1, value2...]
+        https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.axes.Axes.pie.html"""
 
         super().__init__(*args, **kwargs)
-        self.fig = Figure(figsize=(5, 4), dpi=100)
+        self.fig = Figure(figsize=(6, 4), dpi=100)
         names, data = data_series  # unpack the passed arg
         ax = self.fig.add_subplot(111)  # add_subplot returns an axes object
         wedges, text, autopct = ax.pie(data, autopct=lambda x: f"{int(x)}% ", textprops={"color": "w"})
         # the autopct lambda function gets passed the percentage as an argument
-        ax.legend(wedges, names)
+        ax.legend(wedges, names, title="title", loc="center left",
+                  bbox_to_anchor=(1, 1))
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.draw()
         widget = self.canvas.get_tk_widget()
         widget.pack(side=TOP, fill=BOTH, expand=YES)
+        self.canvas.mpl_connect('figure_enter_event', lambda x: print(dir(x)))
